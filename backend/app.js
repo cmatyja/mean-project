@@ -1,13 +1,15 @@
+const path = require('path');
 const express = require('express');
+
 const bodyParcer = require('body-parser');
 const mongoose = require('mongoose');
 
 const postsRoutes = require('./routes/posts');
 
-const config = require('./settings');
+const app_settings = require('./settings');
 
-const connectURL = 'mongodb+srv://' + config.config().database_login + ':'
-  + config.config().database_password + '@cluster0-1mheh.mongodb.net/' + config.config().database_name + '?retryWrites=true&w=majority';
+const connectURL = 'mongodb+srv://' + app_settings.database.login + ':'
+  + app_settings.database.password + '@cluster0-1mheh.mongodb.net/' + app_settings.database.name + '?retryWrites=true&w=majority';
 const connectConfig = {
   useNewUrlParser: true,
 };
@@ -24,6 +26,7 @@ mongoose.connect(connectURL, connectConfig)
 
 app.use(bodyParcer.json());
 app.use(bodyParcer.urlencoded({extends: false}));
+app.use('/images', express.static(path.join('backend/images'))); // autoriser les requetes du dossier Images
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

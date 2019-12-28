@@ -3,25 +3,62 @@ const postsRouter = express.Router();
 
 const Post = require('../models/post');
 
-postsRouter.post('', (req, res, next) => {
+const MIME_TYPE_MAP = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+};
+
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+  destination: (req, file, callback) => {
+    const isValid = MIME_TYPE_MAP[file.mimetype];
+    let error = new Error('Invalid mime type');
+    if (isValid) {
+      error = null;
+    }
+    callback(error, "backend/images");
+  },
+  filename: (req, file, callback) => {
+    const name = file.originalname.toLowerCase().split(' ').join('-');
+    const ext = MIME_TYPE_MAP[file.mimetype];
+    callback(null, name + '-' + Date.now() + '.' + ext);
+  }
+});
+
+postsRouter.post('', multer({storage: storage}).single('image'), (req, res, next) => {
+  const url = req.protocol + '://' + req.get('host');
   // const posts = req.body; // ajouter grâce au BodyParcer
   const post = new Post({
     title: req.body.title,
-    content: req.body.content
+    content: req.body.content,
+    imagePath: url + '/images/' + req.file.filename
   });
-  post.save().then(result => {
+  post.save().then(createdPost => {
     res.status(201).json({
       message: 'Posts ajoutés avec succès',
-      postId: result._id // créé pour éviter d'avoir une erreur en cas de delete juste après ajout (car id:null
+      post: {
+        id: createdPost._id, // créé pour éviter d'avoir une erreur en cas de delete juste après ajout (car id:null
+        title: createdPost.title,
+        content: createdPost.content,
+        imagePath: createdPost.imagePath
+      }
     });
   });
 });
 
-postsRouter.put('/:id', (req, res, next) => {
+postsRouter.put('/:id', multer({storage: storage}).single('image'), (req, res, next) => {
+  let imagePath = req.body.imagePath;
+  if (req.file) {
+    const url = req.protocol + '://' + req.get('host');
+    imagePath = url + '/images/' + req.file.filename
+  }
   const post = new Post({
     _id: req.body.id, // obligé pour mettre à jour l'enregistrement
     title: req.body.title,
     content: req.body.content,
+    imagePath: imagePath
   });
   Post.updateOne({_id: req.params.id}, post).then(result => {
     res.status(200).json({
@@ -33,7 +70,6 @@ postsRouter.put('/:id', (req, res, next) => {
 postsRouter.get('', (req, res, next) => {
   Post.find()
     .then(documents => {
-      console.log(documents);
       res.status(200).json({
         message: 'Post envoyés avec succès',
         posts: documents
@@ -41,6 +77,7 @@ postsRouter.get('', (req, res, next) => {
     });
 });
 
+// All posts
 postsRouter.get('/:id', (req, res, next) => {
   Post.findById(req.params.id).then(post => {
     if (post) {
