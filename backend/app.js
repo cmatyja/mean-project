@@ -5,6 +5,7 @@ const bodyParcer = require('body-parser');
 const mongoose = require('mongoose');
 
 const postsRoutes = require('./routes/posts');
+const userRoutes = require('./routes/user');
 
 const app_settings = require('./settings');
 
@@ -21,8 +22,7 @@ mongoose.connect(connectURL, connectConfig)
   })
   .catch(() => {
     console.log('La connection à la BDD a échoué');
-  })
-;
+  });
 
 app.use(bodyParcer.json());
 app.use(bodyParcer.urlencoded({extends: false}));
@@ -31,7 +31,7 @@ app.use('/images', express.static(path.join('backend/images'))); // autoriser le
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept' +
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization' +
     '');
   res.setHeader('Access-Control-Allow-Methods',
     'GET, POST, PATCH, PUT, DELETE, OPTIONS'
@@ -40,5 +40,6 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/posts", postsRoutes);
+app.use("/api/user", userRoutes);
 
 module.exports = app;
