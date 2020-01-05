@@ -48,9 +48,9 @@ export class PostListComponent implements OnInit, OnDestroy {
     this.authStatusSub = this.authService
       .getAuthStatusListener()
       .subscribe(isAuthenticated => {
-          this.userIsAuthenticated = isAuthenticated;
-          this.userId = this.authService.getUserId();
-        });
+        this.userIsAuthenticated = isAuthenticated;
+        this.userId = this.authService.getUserId();
+      });
   }
 
   onChangedPage(pageData: PageEvent) {
@@ -65,6 +65,8 @@ export class PostListComponent implements OnInit, OnDestroy {
     this.postsService.deletePost(postId)
       .subscribe(() => {
         this.postsService.getPosts(this.postsPerPage, this.currentPage);
+      }, () => {
+        this.isLoading = false;
       });
   }
 

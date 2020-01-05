@@ -9,6 +9,6 @@ module.exports = (req, res, next) => {
     req.userData = {email: decodeToken.email, userId: decodeToken.userId};
     next();
   } catch (error) {
-    res.status(401).json({message: 'Email et/ou mot de passe incorrect'});
+    res.status(401).json({message: 'Vous devez être connecté pour effectuer cette action'});
   }
 };
