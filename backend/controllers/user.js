@@ -29,7 +29,7 @@ exports.createUser = (req, res, next) => {
 
 exports.userLogin = (req, res, next) => {
   let userConnected;
-  User.findOne({email: req.body.email})
+  User.findOne({ email: req.body.email })
     .then(user => {
       if (!user) {
         return res.status(401).json({
@@ -37,28 +37,28 @@ exports.userLogin = (req, res, next) => {
         })
       }
       userConnected = user;
-      return bcrypt.compare(req.body.password, user.password);
-    })
-    .then(result => {
-      if (!result) {
-        return res.status(401).json({
-          message: 'Email et/ou mot de passe incorrect'
+      bcrypt.compare(req.body.password, user.password)
+        .then(result => {
+          if (!result) {
+            return res.status(401).json({
+              message: 'Email et/ou mot de passe incorrect'
+            });
+          }
+          const token = jwt.sign(
+            { email: userConnected.email, userId: userConnected._id },
+            app_settings.security.hash_string,
+            { expiresIn: '1h' });
+          res.status(200).json({
+            message: 'Authentification réussie',
+            token: token,
+            expiresIn: 3600,
+            userId: userConnected._id
+          })
+        })
+        .catch(err => {
+          return res.status(401).json({
+            message: 'Email et/ou mot de passe incorrect'
+          });
         });
-      }
-      const token = jwt.sign(
-        {email: userConnected.email, userId: userConnected._id},
-        app_settings.security.hash_string,
-        {expiresIn: '1h'});
-      res.status(200).json({
-        message: 'Authentification réussie',
-        token: token,
-        expiresIn: 3600,
-        userId: userConnected._id
-      })
     })
-    .catch(err => {
-      return res.status(401).json({
-        message: 'Email et/ou mot de passe incorrect'
-      });
-    });
 };
